@@ -5,7 +5,6 @@ namespace Tests\Unit;
 
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
-use Aws\Sdk;
 use PDA\PDA;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
@@ -16,20 +15,20 @@ class PDATest extends TestCase
     private DynamoDbClient $dynamoDb;
 
     private array $inserted_ids = [];
-
-    public function setUp():void
+    
+    public function setUp(): void
     {
-        $this->dynamoDb = (new Sdk([
-                                   'endpoint'   => 'http://localhost:8000',
-                                   'region'   => 'ap-south-1',
-                                   'version'  => 'latest'
-                               ]))->createDynamoDb();
+        $this->pda = new PDA();
+        $configurations = [
+            'endpoint'   => 'http://localhost:8000',
+            'region'   => 'ap-south-1',
+            'version'  => 'latest'
+        ];
+        $this->dynamoDb = $this->pda->configureDynamoDbClient($configurations);
         $this->createTables();
-        echo "\n";
-        $this->pda = new PDA($this->dynamoDb);
     }
 
-    public function tearDown():void
+    public function tearDown(): void
     {
         $this->deleteTables();
         echo "\n";
@@ -158,8 +157,9 @@ class PDATest extends TestCase
         }
         $this->assertEquals(
             '',
-            $this->pda->insert(
-                $table,
+            $this->pda
+            ->setTableName($table)
+            ->insert(
                 $columns,
                 $values
             )
@@ -203,7 +203,7 @@ class PDATest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->assertEquals(
             '',
-            $this->pda->insert($table, $columns, $values)
+            $this->pda->setTableName($table)->insert($columns, $values)
         );
     }
 
@@ -249,7 +249,7 @@ class PDATest extends TestCase
         sort($array_values);
         $this->assertEquals(
             json_encode($array_values, JSON_THROW_ON_ERROR, 512),
-            $this->pda->select($table, $columns)
+            $this->pda->select($columns)
         );
     }
 
