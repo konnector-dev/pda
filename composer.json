@@ -19,7 +19,8 @@
         }
     },
     "scripts": {
-        "tests": "vendor/bin/phpunit"
+        "tests": "vendor/bin/phpunit",
+        "dynamodblocalstart": "sudo docker run -p 8000:8000 amazon/dynamodb-local"
     },
     "authors": [
         {
