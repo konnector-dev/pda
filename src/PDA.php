@@ -35,7 +35,7 @@ class PDA extends DynamoDbClientWrapper
             $params['Item'] = $marshaler->marshalJson($json);
 
             try {
-                var_dump($this->getDynamoDbClient()->putItem($params));
+                $this->getDynamoDbClient()->putItem($params);
              } catch (DynamoDbException $DynamoDbException) {
                 $this->throwMeBro($DynamoDbException->getMessage());
             }
