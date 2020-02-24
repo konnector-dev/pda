@@ -20,7 +20,7 @@ abstract class DynamoDbClientWrapper {
 
     private $_tableName;
     private $_key;
-    private $_expressionAttributeNames;
+    protected $expressionAttributeNames;
 
     protected array $reservedKeywords = [
         'name', 'status'

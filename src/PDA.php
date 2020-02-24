@@ -67,7 +67,7 @@ class PDA extends DynamoDbClientWrapper
             'Key' => $key,
             'UpdateExpression' => $updateExpression,
             'ExpressionAttributeValues'=> $expressionAttributeValues,
-            'ExpressionAttributeNames' => $this->_expressionAttributeNames,
+            'ExpressionAttributeNames' => $this->expressionAttributeNames,
             'ReturnValues' => 'UPDATED_NEW'
         ];
         try {
