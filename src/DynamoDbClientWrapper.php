@@ -120,7 +120,7 @@ abstract class DynamoDbClientWrapper {
 
         if ($this->isReservedKeyword($column) && !$isExpressionAttributeValue) {
             $alias = '#' . $column;
-            $this->_expressionAttributeNames[$alias] = $column;
+            $this->expressionAttributeNames[$alias] = $column;
         } elseif ($isExpressionAttributeValue) {
             $alias = ':' . $column;
         }
