@@ -49,7 +49,8 @@ abstract class DynamoDbClientWrapper {
     protected function getDynamoDbClient(): DynamoDbClient
     {
         if(empty($this->_dynamoDb)) {
-            $this->throwMeBro('Please configure DynamoDb Client using configureDynamoDbClient(endpoint, region, version) method.');
+            $this->throwMeBro('Please configure DynamoDb Client using configureDynamoDbClient(["endpoint" => "http://localhost:8000", "region" => "ap-south-1", "version" => "latest"
+            ]) method.');
         }
 
         return $this->_dynamoDb;
