@@ -235,7 +235,7 @@ class PDATest extends TestCase
      * @param array $columns
      * @param array $values
      */
-    public function testSelectAllColumnsSuccess(string $table, array $columns, array $values):void
+    public function testSelectAllColumnsSuccess(string $table, array $columns, array $values): void
     {
         $this->testInsertCategorySuccess($table, $columns, $values);
         $array_values = [];
@@ -253,6 +253,48 @@ class PDATest extends TestCase
         );
     }
 
+    public function updateCategorySuccessData(): array
+    {
+        $uuids = [Uuid::uuid4()->toString()];
+        return [
+            [
+                'categories',
+                'insertData' => [
+                    ['id', 'name', 'status', 'test'],
+                    [[$uuids[0], 'fruits', 1, 'value']]
+                ],
+                'updateData' => [
+                    'key' => [
+                        'id' => $uuids[0],
+                        'name' => 'fruits'
+                    ],
+                    'data' => [
+                        'status' => 5,
+                        'test' => 'value5'
+                    ]
+                    
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider updateCategorySuccessData
+     * @param string $table
+     * @param array $columns
+     * @param array $values
+     */
+    public function testUpdateCategorySuccess(string $table, array $insertData, array $updateData): void
+    {
+        $this->testInsertCategorySuccess($table, ...$insertData);
+
+        $this->assertEquals(
+            '{}', $this->pda
+            ->setTableName($table)
+            ->setKey($updateData['key'])
+            ->update($updateData['data'])
+        );
+    }
     /*
 
     public function testSelectSpecificColumns()

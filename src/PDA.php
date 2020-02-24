@@ -42,6 +42,43 @@ class PDA extends DynamoDbClientWrapper
         }
     }
 
+    public function update(array $data): string
+    {
+        $marshaler = new Marshaler();
+        $tableName = $this->getTableName();
+        $keyJson = '{}';
+        $expressionAttributeValuesJson = '{}';
+
+        try {
+            $keyJson = json_encode($this->getKey(), JSON_THROW_ON_ERROR);
+            $expressionAttributeValuesJson 
+                = json_encode($this->prepareExpressionAttributeValuesArray($data), JSON_THROW_ON_ERROR);
+        } catch (JsonException $jsonException) {
+            $this->throwMeBro($jsonException->getMessage());
+        }
+
+        $key = $marshaler->marshalJson($keyJson);
+        $expressionAttributeValues = $marshaler->marshalJson($expressionAttributeValuesJson);
+
+        $updateExpression = $this->prepareUpdateExpressionString($data);
+
+        $params = [
+            'TableName' => $tableName,
+            'Key' => $key,
+            'UpdateExpression' => $updateExpression,
+            'ExpressionAttributeValues'=> $expressionAttributeValues,
+            'ExpressionAttributeNames' => $this->_expressionAttributeNames,
+            'ReturnValues' => 'UPDATED_NEW'
+        ];
+        try {
+            $response = $this->getDynamoDbClient()->updateItem($params);
+
+            return json_encode($response, JSON_THROW_ON_ERROR, 512);
+        } catch (DynamoDbException $dynamoDbException) {
+            $this->throwMeBro($dynamoDbException->getMessage());
+        }
+    }
+
     public function select(array $columns = [], array $values = []): string
     {
         $tableName = $this->getTableName();
@@ -49,8 +86,8 @@ class PDA extends DynamoDbClientWrapper
         $aliases = [];
         $select = [];
 
-        foreach($columns as $column) {
-            if($this->isReservedKeyword($column)) {
+        foreach ($columns as $column) {
+            if ($this->isReservedKeyword($column)) {
                 $aliases["#$column"] = $column;
                 $select["#$column"] = $column;
                 continue;

@@ -2,6 +2,9 @@
 
 namespace PDA;
 
+use \RecursiveIteratorIterator;
+use \RecursiveArrayIterator;
+
 use Aws\Sdk;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
@@ -16,6 +19,7 @@ abstract class DynamoDbClientWrapper {
     private DynamoDbClient $_dynamoDb;
 
     private $_tableName;
+    private $_key;
 
     protected array $reservedKeywords = [
         'name', 'status'
@@ -70,6 +74,68 @@ abstract class DynamoDbClientWrapper {
         }
 
         return $this->_tableName;
+    }
+
+    public function setKey(array $key = []): PDA
+    {
+        $this->_key = $key;
+
+        return $this;
+    }
+
+    protected function getKey(): array
+    {
+        return $this->_key;
+    }
+
+    protected function prepareUpdateExpressionString(array $data): string
+    {
+
+        $updateExpressionString = 'set ';
+        $iterationCount = 0;
+        $recursiveIteratorIterator = new RecursiveIteratorIterator(new RecursiveArrayIterator($data));
+
+        foreach ($recursiveIteratorIterator as $elementValue) {
+
+            $keys = [];
+
+            foreach (range(0, $recursiveIteratorIterator->getDepth()) as $depth) {
+                $keys[] = $recursiveIteratorIterator->getSubIterator($depth)->key();
+            }
+
+            $updateExpressionString .= ($iterationCount > 0) ? ', ' : '';
+            $updateExpressionString .= (sizeof($keys) > 1)? join('.', $keys) : $this->_renameReservedKeywords(join('.', $keys));
+            $updateExpressionString .= ' = :' . $keys[(sizeof($keys) -1)];
+
+            $iterationCount++;
+        }
+
+        return $updateExpressionString;
+    }
+
+    private function _renameReservedKeywords(string $column, $isExpressionAttributeValue = false): string
+    {
+        $alias = '';
+
+        if ($this->isReservedKeyword($column) && !$isExpressionAttributeValue) {
+            $alias = '#' . $column;
+            $this->_expressionAttributeNames[$alias] = $column;
+        } elseif ($isExpressionAttributeValue) {
+            $alias = ':' . $column;
+        }
+
+        return (empty($alias))? $column : $alias;
+    }
+
+    protected function prepareExpressionAttributeValuesArray(array $dataArray): array
+    {
+        $expressionAttributeValuesArray = [];
+
+        foreach ($dataArray as $key => $value) {
+            $expressionAttributeValuesArray[$this->_renameReservedKeywords($key, true)] = $value;
+        }
+
+        return $expressionAttributeValuesArray;
     }
     
 }
