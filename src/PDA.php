@@ -7,6 +7,7 @@ use Aws\DynamoDb\DynamoDbClient;
 use Aws\DynamoDb\Exception\DynamoDbException;
 use Aws\DynamoDb\Marshaler;
 use InvalidArgumentException;
+use JsonException;
 
 class PDA
 {
@@ -56,7 +57,7 @@ class PDA
             try {
                 $json 
                     = json_encode(array_combine($columns, $value), JSON_THROW_ON_ERROR);
-            } catch (\JsonException $jsonException) {
+            } catch (JsonException $jsonException) {
                 $this->throwMeBro($jsonException->getMessage());
             }
 
@@ -71,7 +72,7 @@ class PDA
         }
     }
 
-    public function select(string $table, array $columns = [], array $values = []): string
+    public function select(string $table, array $columns = []): string
     {
         if ($table === '') {
             $this->throwMeBro();
@@ -98,9 +99,9 @@ class PDA
             'ExpressionAttributeNames' => $aliases
         ];
 
+        $responseArray = [];
         try {
             $result = $this->_dynamoDb->scan($params);
-            $responseArray = [];
 
             foreach ($result['Items'] as $item) {
                 $responseArrayItem = $marshaler->unmarshalItem($item);
@@ -119,10 +120,11 @@ class PDA
 
             sort($responseArray);
 
-            return json_encode($responseArray, JSON_THROW_ON_ERROR, 512);
         } catch (DynamoDbException $dynamoDbException) {
             $this->throwMeBro($dynamoDbException->getMessage());
         }
+
+        return json_encode($responseArray);
     }
 
     public function update(string $table): string
@@ -144,14 +146,14 @@ class PDA
         if (!empty($this->_expressionAttributeNames)) {
             $params['ExpressionAttributeNames'] = $this->_expressionAttributeNames;
         }
-        
+
+        $response = '';
         try {
             $response = $this->_dynamoDb->updateItem($params);
-
-            return json_encode($response, JSON_THROW_ON_ERROR, 512);
         } catch (DynamoDbException $dynamoDbException) {
             $this->throwMeBro($dynamoDbException->getMessage());
         }
+        return json_encode($response);
     }
 
     public function key(array $keyArray): PDA
@@ -161,7 +163,7 @@ class PDA
 
         try {
             $keyJson = json_encode($keyArray, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $jsonException) {
+        } catch (JsonException $jsonException) {
             $this->throwMeBro($jsonException->getMessage());
         }
 
@@ -194,7 +196,7 @@ class PDA
 
         try {
             $itemJson = json_encode($item, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $jsonException) {
+        } catch (JsonException $jsonException) {
             $this->throwMeBro($jsonException->getMessage());
         }
 
@@ -251,13 +253,12 @@ class PDA
             'Key' => $this->_getKey()
         ];
 
+        $response = '';
         try {
             $response = $this->_dynamoDb->deleteItem($params);
-            return json_encode($response, JSON_THROW_ON_ERROR, 512);
         } catch (DynamoDbException $dynamoDbException) {
             $this->throwMeBro($dynamoDbException->getMessage());
         }
-
-
+        return json_encode($response);
     }
 }
